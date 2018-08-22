@@ -6,19 +6,17 @@ defmodule LegacyWeb.GameChannelTest do
   setup do
     {:ok, _, socket} =
       socket("user_id", %{some: :assign})
-      |> subscribe_and_join(GameChannel, "game:lobby")
+      |> subscribe_and_join(GameChannel, "game:some_id")
 
     {:ok, socket: socket}
   end
 
   test "ping replies with status ok", %{socket: socket} do
-    ref = push socket, "ping", %{"hello" => "there"}
-    assert_reply ref, :ok, %{"hello" => "there"}
-  end
+    move = %{"block" => "xyz", "steps" => [1, 2, 3]}
+    payload = %{"move" => move}
 
-  test "shout broadcasts to game:lobby", %{socket: socket} do
-    push socket, "shout", %{"hello" => "all"}
-    assert_broadcast "shout", %{"hello" => "all"}
+    ref = push socket, "play_turn", payload
+    assert_broadcast "on_play_turn", ^payload
   end
 
   test "broadcasts are pushed to the client", %{socket: socket} do
