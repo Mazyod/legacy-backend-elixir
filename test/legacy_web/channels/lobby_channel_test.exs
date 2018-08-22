@@ -11,18 +11,23 @@ defmodule LegacyWeb.LobbyChannelTest do
     {:ok, socket: socket}
   end
 
-  test "ping replies with status ok", %{socket: socket} do
-    ref = push socket, "ping", %{"hello" => "there"}
-    assert_reply ref, :ok, %{"hello" => "there"}
+  test "list rooms returns available rooms", %{socket: socket} do
+    ref = push socket, "list_rooms", %{}
+    # TODO: test with some dummy rooms available
+    assert_reply ref, :ok, %{"rooms" => []}
   end
 
-  test "shout broadcasts to lobby:lobby", %{socket: socket} do
-    push socket, "shout", %{"hello" => "all"}
-    assert_broadcast "shout", %{"hello" => "all"}
+  test "open room creates a new room", %{socket: socket} do
+    _ref = push socket, "open_room", %{"hello" => "there"}
+    # TODO: check for room on Lobby GenServer
   end
 
-  test "broadcasts are pushed to the client", %{socket: socket} do
-    broadcast_from! socket, "broadcast", %{"some" => "data"}
-    assert_push "broadcast", %{"some" => "data"}
+  test "join available room flow", %{socket: socket} do
+    # Given: we have an available room
+    # TODO: prepare an available room
+    # When: the user attempts to join that room
+    _ref = push socket, "join_room", %{"room_id" => "TODO"}
+    # Then: we get matched to a game session
+    # TODO: assert we get the game channel id
   end
 end

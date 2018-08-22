@@ -5,16 +5,21 @@ defmodule LegacyWeb.LobbyChannel do
     {:ok, socket}
   end
 
-  # Channels can be used in a request/response fashion
-  # by sending replies to requests from the client
-  def handle_in("ping", payload, socket) do
-    {:reply, {:ok, payload}, socket}
+  # List available rooms
+  def handle_in("list_rooms", _payload, socket) do
+    # TODO: grab available rooms from Lobby
+    {:reply, {:ok, %{"rooms" => []}}, socket}
   end
 
-  # It is also common to receive messages from the client and
-  # broadcast to everyone in the current topic (lobby:lobby).
-  def handle_in("shout", payload, socket) do
-    broadcast socket, "shout", payload
+  # Open a new room. Requires the name of the room to be given.
+  def handle_in("open_room", %{"name" => room_name}, socket) do
+    # TODO: open the room in the Lobby GenServer
+    {:noreply, socket}
+  end
+
+  # Attempt to join the room with the given id
+  def handle_in("join_room", %{"id" => room_id}, socket) do
+    # TODO: attempt to join the room id on Lobby GenServer
     {:noreply, socket}
   end
 end
