@@ -1,7 +1,12 @@
 defmodule LegacyWeb.GameChannel do
   use LegacyWeb, :channel
 
-  def join("game:" <> game_id, payload, socket) do
+
+  def join("game:lobby", _payload, socket) do
+    {:ok, socket}
+  end
+
+  def join("game:" <> _game_id, _payload, socket) do
     {:ok, socket}
   end
 
