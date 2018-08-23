@@ -6,6 +6,7 @@ defmodule LegacyWeb.GameChannel do
     {:ok, socket}
   end
 
+  # either create or join an existing game
   def join("game:" <> _game_id, _payload, socket) do
     {:ok, socket}
   end
