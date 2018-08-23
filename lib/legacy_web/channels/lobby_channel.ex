@@ -14,12 +14,12 @@ defmodule LegacyWeb.LobbyChannel do
   # Open a new room. Requires the name of the room to be given.
   def handle_in("open_room", %{"name" => room_name}, socket) do
     # TODO: open the room in the Lobby GenServer
-    {:noreply, socket}
+    {:reply, {:ok, %{}}, socket}
   end
 
   # Attempt to join the room with the given id
   def handle_in("join_room", %{"id" => room_id}, socket) do
     # TODO: attempt to join the room id on Lobby GenServer
-    {:noreply, socket}
+    {:reply, {:ok, %{}}, socket}
   end
 end

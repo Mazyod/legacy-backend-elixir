@@ -18,7 +18,8 @@ defmodule LegacyWeb.LobbyChannelTest do
   end
 
   test "open room creates a new room", %{socket: socket} do
-    _ref = push socket, "open_room", %{"hello" => "there"}
+    ref = push socket, "open_room", %{"name" => "test room"}
+    assert_reply ref, :ok, %{}
     # TODO: check for room on Lobby GenServer
   end
 
@@ -26,8 +27,9 @@ defmodule LegacyWeb.LobbyChannelTest do
     # Given: we have an available room
     # TODO: prepare an available room
     # When: the user attempts to join that room
-    _ref = push socket, "join_room", %{"room_id" => "TODO"}
+    ref = push socket, "join_room", %{"id" => "TODO"}
     # Then: we get matched to a game session
+    assert_reply ref, :ok, %{}
     # TODO: assert we get the game channel id
   end
 end

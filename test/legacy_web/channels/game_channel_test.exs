@@ -15,7 +15,7 @@ defmodule LegacyWeb.GameChannelTest do
     move = %{"block" => "xyz", "steps" => [1, 2, 3]}
     payload = %{"move" => move}
 
-    ref = push socket, "play_turn", payload
+    _ref = push socket, "play_turn", payload
     assert_broadcast "on_play_turn", ^payload
   end
 
