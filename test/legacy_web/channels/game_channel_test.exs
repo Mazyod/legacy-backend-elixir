@@ -11,7 +11,7 @@ defmodule LegacyWeb.GameChannelTest do
     {:ok, socket: socket}
   end
 
-  test "ping replies with status ok", %{socket: socket} do
+  test "it broadcasts play turn messages", %{socket: socket} do
     move = %{"block" => "xyz", "steps" => [1, 2, 3]}
     payload = %{"move" => move}
 
