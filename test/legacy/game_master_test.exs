@@ -22,7 +22,7 @@ defmodule Legacy.GameMasterTest do
 
   test "it can create games", %{pid: pid} do
     meta = %{"id" => "whatever", "name" => "something"}
-    assert GameMaster.create_game(pid, self(), meta) == :ok
+    assert GameMaster.create_game(pid, meta) == :ok
     assert GameMaster.game_list(pid) == [meta]
   end
 
@@ -31,14 +31,16 @@ defmodule Legacy.GameMasterTest do
   end
 
   test "it handles joining games", %{pid: pid} do
-    # GTH: probably disallow same pid joining twice
     meta = %{"id" => "whatever", "name" => "something"}
-    assert GameMaster.create_game(pid, self(), meta) == :ok
+    assert GameMaster.create_game(pid, meta) == :ok
     assert GameMaster.join_game(pid, self(), meta["id"]) == :ok
   end
 
   ## Feature Tests
 
+  # TODO: notice how the game list is updated immediately, but the game opened
+  # event is only broadcasted later. Game list should also be updated iff the
+  # host joins.
   test "start a game, then disconnect before it begins", %{pid: pid} do
 
     Endpoint.subscribe("games:lobby", [link: true])
@@ -47,25 +49,56 @@ defmodule Legacy.GameMasterTest do
 
     id = "whatever"
     game = %{"id" => id, "name" => "something"}
-    # starting a game...
-    assert GameMaster.create_game(pid, agent, game) == :ok
+    # creating a game...
+    assert GameMaster.create_game(pid, game) == :ok
     # should add it to the game list
     assert GameMaster.game_list(pid) == [game]
-    # and broadcast to the games lobby the new game
-    assert_received %{event: "game_opened", payload: ^game}
 
-    # when the host disconnects
+    # when the host joins...
+    assert GameMaster.join_game(pid, agent, id)
+    # ...it broadcasts to the games lobby the new game
+    assert_received %{event: "game_opened", payload: ^game}
+    # ...and then disconnects
     assert Agent.stop(agent) == :ok
+    # the game closed event is broadcasted to the lobby
+    assert_receive %{event: "game_closed", payload: %{"id" => ^id}}
     # the game is removed from the listing
     assert GameMaster.game_list(pid) == []
-    # and a game closed event is broadcasted to the lobby
-    assert_received %{event: "game_closed", payload: %{"id" => ^id}}
 
     Endpoint.unsubscribe("games:lobby")
   end
 
   test "start a game, guest joins, then guest disconnects", %{pid: pid} do
-    # TODO: write test
+
+    id = "something"
+
+    Endpoint.subscribe("games:lobby", [link: true])
+    Endpoint.subscribe("games:" <> id, [link: true])
+
+    {:ok, host_pid} = Agent.start(fn -> :ok end)
+    {:ok, guest_pid} = Agent.start(fn -> :ok end)
+
+    game = %{"id" => id, "name" => "whatever"}
+    # starting a game...
+    assert GameMaster.create_game(pid, game) == :ok
+
+    # host joins...
+    assert GameMaster.join_game(pid, host_pid, id) == :ok
+    # guest joins...
+    assert GameMaster.join_game(pid, guest_pid, id) == :ok
+    # game disappears from the list
+    assert GameMaster.game_list(pid) == []
+    # with the broadcasts
+    assert_receive %{event: "game_closed", topic: "games:lobby"}
+    assert_receive %{event: "game_started", topic: "games:" <> ^id}
+
+    # if the guest disconnects for a bit...
+    assert Agent.stop(guest_pid) == :ok
+    # we don't immediately lose faith
+    refute_received %{event: "game_ended"}
+
+    Endpoint.unsubscribe("games:lobby")
+    Endpoint.unsubscribe("games:" <> id)
   end
 
   test "start a game, guest joins, both players disconnect", %{pid: pid} do
