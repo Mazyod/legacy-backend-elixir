@@ -4,6 +4,19 @@ defmodule Legacy.GameState do
   @broadcast_topic "games:lobby"
 
 
+  ### Const
+
+  defp config(key), do: Application.get_env(:legacy, __MODULE__)[key]
+  # evaluates to a function object
+  defp interval_resolution do
+    config(:interval_resolution)
+    |> case do
+      :seconds -> &:timer.seconds/1
+      :milliseconds -> &(&1 * 2)
+    end
+  end
+
+
   ## Server
 
   def start(meta),
@@ -96,8 +109,8 @@ defmodule Legacy.GameState do
   end
 
   defp start_grace_timer(state) do
-    seconds = 1_000 # TODO: use interval_resolution from config
-    timer = Process.send_after(self(), :grace_timer_over, 30 * seconds)
+    grace_period = interval_resolution().(30)
+    timer = Process.send_after(self(), :grace_timer_over, grace_period)
     %{state | grace_timer: timer}
   end
 

@@ -5,6 +5,10 @@
 # is restricted to this project.
 use Mix.Config
 
+# Time resolution: reduced in test config for faster tests
+config :legacy, Legacy.GameState,
+  interval_resolution: :seconds
+
 # Configures the endpoint
 config :legacy, LegacyWeb.Endpoint,
   url: [host: "localhost"],

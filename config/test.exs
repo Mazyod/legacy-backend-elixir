@@ -1,5 +1,9 @@
 use Mix.Config
 
+
+config :legacy, Legacy.GameState,
+  interval_resolution: :milliseconds
+
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
 config :legacy, LegacyWeb.Endpoint,
