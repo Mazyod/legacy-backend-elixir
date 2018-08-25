@@ -33,6 +33,7 @@ defmodule Legacy.GameState do
 
   @impl true
   def init(meta) do
+    # TODO: add expiry timer, if no one ever joins this process
     {:ok, %{
       meta: meta,
       players: [],
