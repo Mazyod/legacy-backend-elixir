@@ -41,6 +41,8 @@ defmodule Legacy.GameMasterTest do
   # TODO: notice how the game list is updated immediately, but the game opened
   # event is only broadcasted later. Game list should also be updated iff the
   # host joins.
+  # TODO: this test is flaky due to player pid termination message takes time
+  # to propagate all the way to GameMaster.
   test "start a game, then disconnect before it begins", %{pid: pid} do
 
     Endpoint.subscribe("games:lobby", [link: true])
