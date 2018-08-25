@@ -22,6 +22,9 @@ defmodule Legacy.GameState do
   def start(meta),
   do: GenServer.start(__MODULE__, meta)
 
+  def start_link(meta),
+  do: GenServer.start_link(__MODULE__, meta)
+
   def add_player(pid, player_pid),
   do: GenServer.call(pid, {:add_player, player_pid})
 
