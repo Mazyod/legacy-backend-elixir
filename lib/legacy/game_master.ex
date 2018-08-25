@@ -7,6 +7,8 @@ defmodule Legacy.GameMaster do
   """
   use GenServer
 
+  alias Legacy.GameState
+
 
   ## Client
 

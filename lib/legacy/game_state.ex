@@ -1,4 +1,4 @@
-defmodule GameState do
+defmodule Legacy.GameState do
   use GenServer
 
   @broadcast_topic "games:lobby"
