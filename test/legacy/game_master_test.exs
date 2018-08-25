@@ -104,6 +104,12 @@ defmodule Legacy.GameMasterTest do
     # we get notified about that as well
     assert_receive %{event: "player_reconnected"}
 
+    # if a player disconnects ...
+    assert Agent.stop(guest_pid) == :ok
+    # we disconnect after sufficient time has passed
+    assert_receive %{event: "player_disconnected"}
+    assert_receive %{event: "game_ended"}, 200
+
     Endpoint.unsubscribe("games:lobby")
     Endpoint.unsubscribe("games:" <> id)
   end
