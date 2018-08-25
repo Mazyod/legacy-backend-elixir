@@ -51,8 +51,9 @@ defmodule Legacy.GameMaster do
 
   @impl true
   def handle_call({:join_game, pid, id}, _from, state) do
+    game = state.pending_games[id] || state.running_games[id]
     {result, state} =
-      case state.pending_games[id] do
+      case game do
         nil ->
           {:error, state}
         game ->

@@ -95,7 +95,12 @@ defmodule Legacy.GameMasterTest do
     # if the guest disconnects for a bit...
     assert Agent.stop(guest_pid) == :ok
     # we don't immediately lose faith
+    assert_receive %{event: "player_disconnected"}
     refute_received %{event: "game_ended"}
+
+    # if the guest rejoins...
+    {:ok, guest_pid} = Agent.start(fn -> :ok end)
+    assert GameMaster.join_game(pid, guest_pid, id) == :ok
 
     Endpoint.unsubscribe("games:lobby")
     Endpoint.unsubscribe("games:" <> id)

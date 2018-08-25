@@ -28,22 +28,23 @@ defmodule GameState do
     {result, players} =
       case state.players do
         [] ->
-          broadcast_game_opened(state.meta)
+          broadcast_game_opened(state)
           {:game_opened, [pid]}
         [_] ->
-          broadcast_game_closed(state.meta["id"])
-          broadcast_game_started(state.meta["id"])
+          broadcast_game_closed(state)
+          broadcast_game_started(state)
           {:game_closed, state.players ++ [pid]}
         [p1, p2] ->
           cond do
             Process.alive?(p1) == false ->
+              broadcast_player_reconnected(state)
               {:player_rejoined, [pid, p2]}
             Process.alive?(p2) == false ->
+              broadcast_player_reconnected(state)
               {:player_rejoined, [p1, pid]}
             true ->
               {:error, state.players}
           end
-          {:error, state.players}
       end
 
     unless result == :error do
@@ -60,7 +61,7 @@ defmodule GameState do
     if Process.alive?(p1) and Process.alive?(p2) do
       {:noreply, state}
     else
-      broadcast_game_ended(state.meta["id"])
+      broadcast_game_ended(state)
       {:stop, {:shutdown, :normal}, state}
     end
   end
@@ -70,11 +71,12 @@ defmodule GameState do
     case state do
       %{players: [_]} ->
         # game hasn't started, so still in game list
-        broadcast_game_closed(state.meta["id"])
+        broadcast_game_closed(state)
         {:stop, {:shutdown, :normal}, state}
       %{players: [p1, p2]} ->
         if Process.alive?(p1) or Process.alive?(p2) do
           # player disconnected. Give them a chance to reconnect
+          broadcast_player_disconnected(state)
           {:noreply, start_grace_timer(state)}
         else
           # both players gone! Let's just give up
@@ -104,11 +106,11 @@ defmodule GameState do
     LegacyWeb.Endpoint.broadcast! @broadcast_topic, event, payload
   end
 
-  defp broadcast_game_opened(meta) do
+  defp broadcast_game_opened(%{meta: meta}) do
     broadcast("game_opened", meta)
   end
 
-  defp broadcast_game_closed(id) do
+  defp broadcast_game_closed(%{meta: %{"id" => id}}) do
     broadcast("game_closed", %{"id" => id})
   end
 
@@ -116,11 +118,19 @@ defmodule GameState do
     LegacyWeb.Endpoint.broadcast! "games:" <> id, event, %{}
   end
 
-  defp broadcast_game_started(id) do
+  defp broadcast_game_started(%{meta: %{"id" => id}}) do
     broadcast_game_event(id, "game_started")
   end
 
-  defp broadcast_game_ended(id) do
+  defp broadcast_player_disconnected(%{meta: %{"id" => id}}) do
+    broadcast_game_event(id, "player_disconnected")
+  end
+
+  defp broadcast_player_reconnected(%{meta: %{"id" => id}}) do
+    broadcast_game_event(id, "player_reconnected")
+  end
+
+  defp broadcast_game_ended(%{meta: %{"id" => id}}) do
     broadcast_game_event(id, "game_ended")
   end
 
