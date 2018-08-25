@@ -12,12 +12,13 @@ defmodule Legacy.GameMaster do
 
   ## Client
 
-  def start_link, do: GenServer.start_link(__MODULE__, :ok)
+  def start_link(opts \\ []),
+  do: GenServer.start_link(__MODULE__, :ok, opts)
 
   def game_list(pid),
   do: GenServer.call(pid, :game_list)
 
-  def create_game(pid, %{"id" => _id} = meta),
+  def create_game(pid, %{"name" => _} = meta),
   do: GenServer.call(pid, {:create_game, meta})
 
   def join_game(pid, player_pid, id) when is_binary(id),
@@ -44,11 +45,14 @@ defmodule Legacy.GameMaster do
 
   @impl true
   def handle_call({:create_game, meta}, _from, state) do
+    id = :crypto.strong_rand_bytes(15) |> Base.encode16()
+    meta = Map.put(meta, "id", id)
     {:ok, game_state} = GameState.start(meta)
+
     _ref = Process.monitor(game_state)
     game = %{meta: meta, pid: game_state}
     games = Map.put(state.pending_games, meta["id"], game)
-    {:reply, :ok, %{state | pending_games: games}}
+    {:reply, {:ok, id}, %{state | pending_games: games}}
   end
 
   @impl true

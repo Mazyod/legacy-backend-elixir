@@ -12,7 +12,7 @@ defmodule Legacy.Application do
       supervisor(LegacyWeb.Endpoint, []),
       # Start your own worker by calling: Legacy.Worker.start_link(arg1, arg2, arg3)
       # worker(Legacy.Worker, [arg1, arg2, arg3]),
-      worker(Legacy.GameMaster, []),
+      worker(Legacy.GameMaster, [[name: :game_master]]),
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

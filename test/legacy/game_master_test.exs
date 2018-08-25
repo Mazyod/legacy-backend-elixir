@@ -21,9 +21,9 @@ defmodule Legacy.GameMasterTest do
   end
 
   test "it can create games", %{pid: pid} do
-    meta = %{"id" => "whatever", "name" => "something"}
-    assert GameMaster.create_game(pid, meta) == :ok
-    assert GameMaster.game_list(pid) == [meta]
+    meta = %{"name" => "something"}
+    {:ok, id} = GameMaster.create_game(pid, meta)
+    assert GameMaster.game_list(pid) == [Map.put(meta, "id", id)]
   end
 
   test "it handles joining nonexistent games", %{pid: pid} do
@@ -31,9 +31,9 @@ defmodule Legacy.GameMasterTest do
   end
 
   test "it handles joining games", %{pid: pid} do
-    meta = %{"id" => "whatever", "name" => "something"}
-    assert GameMaster.create_game(pid, meta) == :ok
-    assert GameMaster.join_game(pid, self(), meta["id"]) == :ok
+    meta = %{"name" => "something"}
+    {:ok, id} = GameMaster.create_game(pid, meta)
+    assert GameMaster.join_game(pid, self(), id) == :ok
   end
 
   ## Feature Tests
@@ -49,12 +49,10 @@ defmodule Legacy.GameMasterTest do
 
     {:ok, agent} = Agent.start_link(fn -> :ok end)
 
-    id = "whatever"
-    game = %{"id" => id, "name" => "something"}
+    game = %{"name" => "something"}
     # creating a game...
-    assert GameMaster.create_game(pid, game) == :ok
-    # should add it to the game list
-    assert GameMaster.game_list(pid) == [game]
+    {:ok, id} = GameMaster.create_game(pid, game)
+    game = Map.put(game, "id", id)
 
     # when the host joins...
     assert GameMaster.join_game(pid, agent, id)
@@ -72,17 +70,15 @@ defmodule Legacy.GameMasterTest do
 
   test "start a game, guest joins, then guest disconnects", %{pid: pid} do
 
-    id = "something"
-
     Endpoint.subscribe("games:lobby", [link: true])
-    Endpoint.subscribe("games:" <> id, [link: true])
 
     {:ok, host_pid} = Agent.start(fn -> :ok end)
     {:ok, guest_pid} = Agent.start(fn -> :ok end)
 
-    game = %{"id" => id, "name" => "whatever"}
+    game = %{"name" => "whatever"}
     # starting a game...
-    assert GameMaster.create_game(pid, game) == :ok
+    {:ok, id} = GameMaster.create_game(pid, game)
+    Endpoint.subscribe("games:" <> id, [link: true])
 
     # host joins...
     assert GameMaster.join_game(pid, host_pid, id) == :ok
@@ -116,7 +112,7 @@ defmodule Legacy.GameMasterTest do
     Endpoint.unsubscribe("games:" <> id)
   end
 
-  test "start a game, guest joins, both players disconnect", %{pid: pid} do
+  test "start a game, guest joins, both players disconnect", %{pid: _pid} do
     # TODO: write test
   end
 
