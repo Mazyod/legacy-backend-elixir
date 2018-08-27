@@ -16,7 +16,6 @@ defmodule LegacyWeb.GameChannel do
     result = GameMaster.join_game(:game_master, self(), id)
     |> case do
       :ok ->
-        # TODO: push down the game state
         {:ok, socket}
       _ ->
         {:error, %{}}
@@ -26,7 +25,7 @@ defmodule LegacyWeb.GameChannel do
   @impl true
   def handle_in("open_game", %{"name" => _} = meta, socket) do
     {:ok, id} = GameMaster.create_game(:game_master, meta)
-    {:reply, {:ok, id}, socket}
+    {:reply, {:ok, %{"id" => id}}, socket}
   end
 
   @impl true
@@ -37,7 +36,8 @@ defmodule LegacyWeb.GameChannel do
 
   @impl true
   def handle_info(:after_join_lobby, socket) do
-    push socket, "on_game_list", GameMaster.game_list(:game_master)
+    game_list = GameMaster.game_list(:game_master)
+    push socket, "on_game_list", %{"game_list" => game_list}
     {:noreply, socket}
   end
 end
