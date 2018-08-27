@@ -5,15 +5,14 @@ defmodule LegacyWeb.GameChannel do
 
 
   @impl true
-  def join("game:lobby", _payload, socket) do
+  def join("games:lobby", _payload, socket) do
     send(self(), :after_join_lobby)
     {:ok, socket}
   end
 
   # either create or join an existing game
   @impl true
-  def join("game:" <> id, _payload, socket) do
-    # GTH: probably get the game_state pid for further features
+  def join("games:" <> id, _payload, socket) do
     result = GameMaster.join_game(:game_master, self(), id)
     |> case do
       :ok ->

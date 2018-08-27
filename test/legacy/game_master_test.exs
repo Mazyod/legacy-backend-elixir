@@ -57,7 +57,7 @@ defmodule Legacy.GameMasterTest do
     # when the host joins...
     assert GameMaster.join_game(pid, agent, id)
     # ...it broadcasts to the games lobby the new game
-    assert_received %{event: "game_opened", payload: ^game}
+    assert_received %{event: "on_game_opened", payload: ^game}
     # ...and then disconnects
     assert Agent.stop(agent) == :ok
     # due to some message relay delay, we need to wait for the down message
@@ -66,7 +66,7 @@ defmodule Legacy.GameMasterTest do
     # the game is removed from the listing
     assert GameMaster.game_list(pid) == []
     # the game closed event is broadcasted to the lobby
-    assert_receive %{event: "game_closed", payload: %{"id" => ^id}}
+    assert_receive %{event: "on_game_closed", payload: %{"id" => ^id}}
 
     Endpoint.unsubscribe("games:lobby")
   end
@@ -90,26 +90,26 @@ defmodule Legacy.GameMasterTest do
     # game disappears from the list
     assert GameMaster.game_list(pid) == []
     # with the broadcasts
-    assert_receive %{event: "game_closed", topic: "games:lobby"}
-    assert_receive %{event: "game_started", topic: "games:" <> ^id}
+    assert_receive %{event: "on_game_closed", topic: "games:lobby"}
+    assert_receive %{event: "on_game_started", topic: "games:" <> ^id}
 
     # if a player disconnects for a bit...
     assert Agent.stop(guest_pid) == :ok
     # we don't immediately lose faith
-    assert_receive %{event: "player_disconnected"}
-    refute_received %{event: "game_ended"}
+    assert_receive %{event: "on_player_disconnected"}
+    refute_received %{event: "on_game_ended"}
 
     # if the player rejoins...
     {:ok, guest_pid} = Agent.start(fn -> :ok end)
     assert GameMaster.join_game(pid, guest_pid, id) == :ok
     # we get notified about that as well
-    assert_receive %{event: "player_reconnected"}
+    assert_receive %{event: "on_player_reconnected"}
 
     # if a player disconnects ...
     assert Agent.stop(guest_pid) == :ok
     # we disconnect after sufficient time has passed
-    assert_receive %{event: "player_disconnected"}
-    assert_receive %{event: "game_ended"}, 200
+    assert_receive %{event: "on_player_disconnected"}
+    assert_receive %{event: "on_game_ended"}, 200
 
     Endpoint.unsubscribe("games:lobby")
     Endpoint.unsubscribe("games:" <> id)

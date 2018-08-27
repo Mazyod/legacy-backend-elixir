@@ -2,7 +2,7 @@ defmodule LegacyWeb.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  channel "game:*", LegacyWeb.GameChannel
+  channel "games:*", LegacyWeb.GameChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket

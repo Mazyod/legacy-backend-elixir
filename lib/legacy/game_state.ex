@@ -124,11 +124,11 @@ defmodule Legacy.GameState do
   end
 
   defp broadcast_game_opened(%{meta: meta}) do
-    broadcast("game_opened", meta)
+    broadcast("on_game_opened", meta)
   end
 
   defp broadcast_game_closed(%{meta: %{"id" => id}}) do
-    broadcast("game_closed", %{"id" => id})
+    broadcast("on_game_closed", %{"id" => id})
   end
 
   defp broadcast_game_event(id, event) do
@@ -136,19 +136,19 @@ defmodule Legacy.GameState do
   end
 
   defp broadcast_game_started(%{meta: %{"id" => id}}) do
-    broadcast_game_event(id, "game_started")
+    broadcast_game_event(id, "on_game_started")
   end
 
   defp broadcast_player_disconnected(%{meta: %{"id" => id}}) do
-    broadcast_game_event(id, "player_disconnected")
+    broadcast_game_event(id, "on_player_disconnected")
   end
 
   defp broadcast_player_reconnected(%{meta: %{"id" => id}}) do
-    broadcast_game_event(id, "player_reconnected")
+    broadcast_game_event(id, "on_player_reconnected")
   end
 
   defp broadcast_game_ended(%{meta: %{"id" => id}}) do
-    broadcast_game_event(id, "game_ended")
+    broadcast_game_event(id, "on_game_ended")
   end
 
 end
