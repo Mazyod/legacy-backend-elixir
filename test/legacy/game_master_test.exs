@@ -60,10 +60,13 @@ defmodule Legacy.GameMasterTest do
     assert_received %{event: "game_opened", payload: ^game}
     # ...and then disconnects
     assert Agent.stop(agent) == :ok
-    # the game closed event is broadcasted to the lobby
-    assert_receive %{event: "game_closed", payload: %{"id" => ^id}}
+    # due to some message relay delay, we need to wait for the down message
+    :erlang.trace(pid, true, [:receive])
+    assert_receive({:trace, ^pid, :receive, {:DOWN, _, _, _, _}})
     # the game is removed from the listing
     assert GameMaster.game_list(pid) == []
+    # the game closed event is broadcasted to the lobby
+    assert_receive %{event: "game_closed", payload: %{"id" => ^id}}
 
     Endpoint.unsubscribe("games:lobby")
   end
