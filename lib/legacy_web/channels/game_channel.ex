@@ -29,8 +29,8 @@ defmodule LegacyWeb.GameChannel do
   end
 
   @impl true
-  def handle_in("play_turn", %{"move" => _} = payload, socket) do
-    broadcast socket, "on_play_turn", payload
+  def handle_in("send_message", %{"data" => _} = payload, socket) do
+    broadcast socket, "on_message", %{payload: payload, sender: socket.channel_pid}
     {:noreply, socket}
   end
 
@@ -38,6 +38,14 @@ defmodule LegacyWeb.GameChannel do
   def handle_info(:after_join_lobby, socket) do
     game_list = GameMaster.game_list(:game_master)
     push socket, "on_game_list", %{"game_list" => game_list}
+    {:noreply, socket}
+  end
+
+  intercept ["on_message"]
+  def handle_out("on_message" = event, %{payload: payload, sender: sender}, socket) do
+    unless socket.channel_pid == sender do
+      push socket, event, payload
+    end
     {:noreply, socket}
   end
 end

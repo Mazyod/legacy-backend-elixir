@@ -45,10 +45,11 @@ defmodule LegacyWeb.GameChannelTest do
     assert_broadcast "on_game_started", %{}
 
     # send some moves
-    turn = %{"move" => [1, 2, 3]}
-    _ref = push game_socket1, "play_turn", turn
-    assert_broadcast "on_play_turn", ^turn
-    assert_broadcast "on_play_turn", ^turn
+    turn = %{"data" => [1, 2, 3]}
+    _ref = push game_socket1, "send_message", turn
+    # only the other player receives the message
+    assert_push "on_message", ^turn
+    refute_push "on_message", ^turn
 
     # cleanup
     ref1 = leave game_socket1
