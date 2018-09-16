@@ -13,7 +13,7 @@ defmodule LegacyWeb.GameChannel do
   # either create or join an existing game
   @impl true
   def join("games:" <> id, _payload, socket) do
-    result = GameMaster.join_game(:game_master, self(), id)
+    GameMaster.join_game(:game_master, self(), id)
     |> case do
       :ok ->
         {:ok, socket}
