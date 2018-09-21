@@ -41,6 +41,12 @@ defmodule LegacyWeb.GameChannel do
     {:noreply, socket}
   end
 
+  @impl true
+  def handle_info({:on_event, event}, socket) do
+    push socket, event, %{}
+    {:noreply, socket}
+  end
+
   intercept ["on_message"]
   def handle_out("on_message" = event, %{payload: payload, sender: sender}, socket) do
     unless socket.channel_pid == sender do

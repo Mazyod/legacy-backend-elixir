@@ -41,8 +41,8 @@ defmodule LegacyWeb.GameChannelTest do
     {:ok, _, game_socket2} = socket("jim", %{})
     |> subscribe_and_join(GameChannel, "games:" <> id)
 
-    assert_broadcast "on_game_started", %{}
-    assert_broadcast "on_game_started", %{}
+    assert_push "on_game_started", %{}
+    assert_push "on_game_started", %{}
 
     # send some moves
     turn = %{"data" => [1, 2, 3]}

@@ -42,25 +42,29 @@ defmodule Legacy.GameState do
 
   @impl true
   def handle_call({:add_player, pid}, _from, state) do
-    {result, players} =
+    {result, state} =
       case state.players do
         [] ->
+          state = %{state | players: [pid]}
           broadcast_game_opened(state)
-          {:game_opened, [pid]}
-        [_] ->
+          {:game_opened, state}
+        [_] = players ->
+          state = %{state | players: players ++ [pid]}
           broadcast_game_closed(state)
           broadcast_game_started(state)
-          {:game_closed, state.players ++ [pid]}
+          {:game_closed, state}
         [p1, p2] ->
           cond do
             Process.alive?(p1) == false ->
+              state = %{state | players: [pid, p2]}
               broadcast_player_reconnected(state)
-              {:player_rejoined, [pid, p2]}
+              {:player_rejoined, state}
             Process.alive?(p2) == false ->
+              state = %{state | players: [p1, pid]}
               broadcast_player_reconnected(state)
-              {:player_rejoined, [p1, pid]}
+              {:player_rejoined, state}
             true ->
-              {:error, state.players}
+              {:error, state}
           end
       end
 
@@ -68,7 +72,7 @@ defmodule Legacy.GameState do
       Process.monitor(pid)
     end
 
-    {:reply, result, %{state | players: players}}
+    {:reply, result, state}
   end
 
   ## Process monitor
@@ -131,24 +135,26 @@ defmodule Legacy.GameState do
     broadcast("on_game_closed", %{"id" => id})
   end
 
-  defp broadcast_game_event(id, event) do
-    LegacyWeb.Endpoint.broadcast! "games:" <> id, event, %{}
+  defp broadcast_game_event(%{players: players}, event) do
+    players |> Enum.each(fn player ->
+      send player, {:on_event, event}
+    end)
   end
 
-  defp broadcast_game_started(%{meta: %{"id" => id}}) do
-    broadcast_game_event(id, "on_game_started")
+  defp broadcast_game_started(state) do
+    broadcast_game_event(state, "on_game_started")
   end
 
-  defp broadcast_player_disconnected(%{meta: %{"id" => id}}) do
-    broadcast_game_event(id, "on_player_disconnected")
+  defp broadcast_player_disconnected(state) do
+    broadcast_game_event(state, "on_player_disconnected")
   end
 
-  defp broadcast_player_reconnected(%{meta: %{"id" => id}}) do
-    broadcast_game_event(id, "on_player_reconnected")
+  defp broadcast_player_reconnected(state) do
+    broadcast_game_event(state, "on_player_reconnected")
   end
 
-  defp broadcast_game_ended(%{meta: %{"id" => id}}) do
-    broadcast_game_event(id, "on_game_ended")
+  defp broadcast_game_ended(state) do
+    broadcast_game_event(state, "on_game_ended")
   end
 
 end

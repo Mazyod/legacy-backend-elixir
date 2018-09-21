@@ -47,7 +47,7 @@ defmodule Legacy.GameMasterTest do
 
     Endpoint.subscribe("games:lobby", [link: true])
 
-    {:ok, agent} = Agent.start_link(fn -> :ok end)
+    host_pid = dummy_pid()
 
     game = %{"name" => "something"}
     # creating a game...
@@ -55,11 +55,11 @@ defmodule Legacy.GameMasterTest do
     game = Map.put(game, "id", id)
 
     # when the host joins...
-    assert GameMaster.join_game(pid, agent, id)
+    assert GameMaster.join_game(pid, host_pid, id)
     # ...it broadcasts to the games lobby the new game
     assert_received %{event: "on_game_opened", payload: ^game}
     # ...and then disconnects
-    assert Agent.stop(agent) == :ok
+    assert Process.exit(host_pid, :kill)
     # due to some message relay delay, we need to wait for the down message
     :erlang.trace(pid, true, [:receive])
     assert_receive({:trace, ^pid, :receive, {:DOWN, _, _, _, _}})
@@ -75,8 +75,10 @@ defmodule Legacy.GameMasterTest do
 
     Endpoint.subscribe("games:lobby", [link: true])
 
-    {:ok, host_pid} = Agent.start(fn -> :ok end)
-    {:ok, guest_pid} = Agent.start(fn -> :ok end)
+    host_pid = dummy_pid()
+    guest_pid = dummy_pid()
+
+    :erlang.trace(host_pid, true, [:receive])
 
     game = %{"name" => "whatever"}
     # starting a game...
@@ -91,25 +93,25 @@ defmodule Legacy.GameMasterTest do
     assert GameMaster.game_list(pid) == []
     # with the broadcasts
     assert_receive %{event: "on_game_closed", topic: "games:lobby"}
-    assert_receive %{event: "on_game_started", topic: "games:" <> ^id}
+    assert_receive {:trace, ^host_pid, :receive, {:on_event, "on_game_started"}}
 
     # if a player disconnects for a bit...
-    assert Agent.stop(guest_pid) == :ok
+    assert Process.exit(guest_pid, :kill)
     # we don't immediately lose faith
-    assert_receive %{event: "on_player_disconnected"}
+    assert_receive {:trace, ^host_pid, :receive, {:on_event, "on_player_disconnected"}}
     refute_received %{event: "on_game_ended"}
 
     # if the player rejoins...
-    {:ok, guest_pid} = Agent.start(fn -> :ok end)
+    guest_pid = dummy_pid()
     assert GameMaster.join_game(pid, guest_pid, id) == :ok
     # we get notified about that as well
-    assert_receive %{event: "on_player_reconnected"}
+    assert_receive {:trace, ^host_pid, :receive, {:on_event, "on_player_reconnected"}}
 
     # if a player disconnects ...
-    assert Agent.stop(guest_pid) == :ok
+    assert Process.exit(guest_pid, :kill)
     # we disconnect after sufficient time has passed
-    assert_receive %{event: "on_player_disconnected"}
-    assert_receive %{event: "on_game_ended"}, 200
+    assert_receive {:trace, ^host_pid, :receive, {:on_event, "on_player_disconnected"}}
+    assert_receive {:trace, ^host_pid, :receive, {:on_event, "on_game_ended"}}, 200
 
     Endpoint.unsubscribe("games:lobby")
     Endpoint.unsubscribe("games:" <> id)
@@ -117,6 +119,21 @@ defmodule Legacy.GameMasterTest do
 
   test "start a game, guest joins, both players disconnect", %{pid: _pid} do
     # TODO: write test
+  end
+
+  ## helpers
+  # TODO: Find a better common place
+
+  defp dummy_pid do
+    spawn(fn ->
+      loop = fn loop ->
+        receive do
+          _ -> :ok
+        end
+        loop.(loop)
+      end
+      loop.(loop)
+    end)
   end
 
 end
