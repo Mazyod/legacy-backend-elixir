@@ -1,9 +1,9 @@
 # This file is responsible for configuring your application
-# and its dependencies with the aid of the Mix.Config module.
+# and its dependencies with the aid of the Config module.
 #
 # This configuration file is loaded before any dependency and
 # is restricted to this project.
-use Mix.Config
+import Config
 
 # Time resolution: reduced in test config for faster tests
 config :legacy, Legacy.GameState,
@@ -11,6 +11,7 @@ config :legacy, Legacy.GameState,
 
 # Configures the endpoint
 config :legacy, LegacyWeb.Endpoint,
+  adapter: Bandit.PhoenixAdapter,
   url: [host: "localhost"],
   secret_key_base: "lq/ip2iXlFjLNClhvxtYu3e0T/6lAtBc4mnNjxi9ezxZ2lfw6XOwuz2idqjUFjCk",
   render_errors: [view: LegacyWeb.ErrorView, accepts: ~w(html json)],
